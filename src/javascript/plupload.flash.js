@@ -307,13 +307,41 @@
 					});
 				});
 
+        uploader.bind("Flash:Error", function (up, err) {
+					up.lastError = err.code;
+					up.lastErrorTimestamp = new Date().getTime();
+
+					switch (err.code) {
+						case 1000:
+							uploader.trigger('Error', {
+								code: plupload.IMAGE_MEMORY_ERROR,
+								message: plupload.translate('Error: File too large: '),
+								details: err.message,
+								file: uploader.getFile(lookup[err.id])
+							});
+							break;
+						default:
+							uploader.trigger('Error', {
+								code: parseInt(err.code, 10),
+								message: plupload.translate('IO error.'),
+								details: err.message,
+								file: uploader.getFile(lookup[err.id])
+							});
+							break;
+					}
+        });
+
 				uploader.bind("Flash:IOError", function(up, err) {
-					uploader.trigger('Error', {
-						code : plupload.IO_ERROR,
-						message : plupload.translate('IO error.'),
-						details : err.message,
-						file : uploader.getFile(lookup[err.id])
-					});
+					var now = new Date().getTime();
+
+					if (!up.lastError || up.lastError != 1000 || (now - up.lastErrorTimestamp > 500)) {
+						uploader.trigger('Error', {
+							code : plupload.IO_ERROR,
+							message : plupload.translate('IO error.'),
+							details : err.message,
+							file : uploader.getFile(lookup[err.id])
+						});
+					}
 				});
 				
 				uploader.bind("Flash:ImageError", function(up, err) {

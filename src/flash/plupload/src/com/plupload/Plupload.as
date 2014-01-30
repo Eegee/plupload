@@ -21,6 +21,8 @@ package com.plupload {
 	import flash.net.URLVariables;
 	import flash.net.URLStream;
 	import flash.events.Event;
+	import flash.events.ErrorEvent;
+	import flash.events.UncaughtErrorEvent;
 	import flash.events.MouseEvent;
 	import flash.events.FocusEvent;
 	import flash.events.ProgressEvent;
@@ -48,6 +50,7 @@ package com.plupload {
 		private var files:Dictionary;
 		private var idCounter:int = 0;
 		private var currentFile:File;
+		private var currentFileId:String;
 		private var id:String;
 		private var fileFilters:Array;
 		private var multipleFiles:Boolean;
@@ -55,6 +58,43 @@ package com.plupload {
 		private var fileRef:FileReference;
 		private var _disabled:Boolean = false;
 
+		
+		private function uncaughtErrorHandler(event:UncaughtErrorEvent):void
+		{
+			var errstring:String = "";
+
+			if (event.error is Error)
+			{
+				var error:Error = event.error as Error;
+				if (this.currentFileId) {
+					fireEvent("Error", { name: error.name, code: error.errorID, id: this.currentFileId } );
+				}
+				else {
+					fireEvent("Error", { name: error.name, code: error.errorID } );
+				}
+				event.preventDefault();
+				event.stopImmediatePropagation();
+			}
+			else if (event.error is ErrorEvent)
+			{
+				var errorEvent:ErrorEvent = event.error as ErrorEvent;
+				if (this.currentFileId) {
+					fireEvent("Error", { name: error.name, code: errorEvent.errorID, id: this.currentFileId } );
+				}
+				else
+				{
+					fireEvent("Error", { name: error.name, code: errorEvent.errorID } );
+				}
+				event.preventDefault();
+				event.stopImmediatePropagation();
+			}
+			else
+			{
+				// a non-Error, non-ErrorEvent type was thrown and uncaught
+			}
+		}
+		
+		
 		/**
 		 * Main constructor for the Plupload class.
 		 */
@@ -76,6 +116,8 @@ package com.plupload {
 			// Allow cross domain scripting access
 			Security.allowDomain("*");
 
+			loaderInfo.uncaughtErrorEvents.addEventListener(UncaughtErrorEvent.UNCAUGHT_ERROR, uncaughtErrorHandler);
+			
 			// Setup id
 			this.id = (this.stage.loaderInfo.parameters["id"]).toString().replace(/[^\w]/g, ''); // allow only [a-zA-Z0-9_]
 
@@ -173,7 +215,6 @@ package com.plupload {
 				// Add error listener
 				file.addEventListener(IOErrorEvent.IO_ERROR, function(e:IOErrorEvent):void {
 					var file:File = e.target as File;
-
 					fireEvent("IOError", {
 						id : file.id,
 						message : e.text.replace(/\\/g, "\\\\")
@@ -334,6 +375,7 @@ package com.plupload {
 			var file:File = this.files[id] as File;
 
 			if (file) {
+				this.currentFileId = file.id;
 				this.currentFile = file;
 				file.upload(url, settings);
 			}
