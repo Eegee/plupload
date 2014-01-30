@@ -628,7 +628,7 @@
 				}	
 
 				function sendBinaryBlob(blob) {
-					var chunk = 0, loaded = 0;
+                    var chunk = 0, loaded = 0, nrpoging = 0, maxpoging = 3, mislukt = false;
 						
 
 					function uploadNextChunk() {
@@ -660,6 +660,10 @@
 								};
 							}
 	
+                            xhr.onerror = function () {
+                                mislukt = true;
+                            }
+
 							xhr.onreadystatechange = function() {
 								var httpStatus, chunkArgs;
 																	
@@ -670,9 +674,12 @@
 									} catch (ex) {
 										httpStatus = 0;
 									}
-	
+                                    // mislukt overnemen vanuit onerror, als xhr.status >= 400 of als xhr.status 0 is en nog geen poging opnieuw is gedaan (voor files kleiner dan 1 chunkgrootte)
+                                    mislukt = mislukt || (httpStatus >= 400) || (httpStatus == 0 && nrpoging == 0);
 									// Is error status
-									if (httpStatus >= 400) {
+                                    if (mislukt) {
+                                        nrpoging++;
+                                        if (nrpoging >= maxpoging) {
 										up.trigger('Error', {
 											code : plupload.HTTP_ERROR,
 											message : plupload.translate('HTTP Error.'),
@@ -680,7 +687,14 @@
 											status : httpStatus,
 											response : xhr.responseText
 										});
+                                        }
+                                        else {
+                                            bin = chunkBlob = formData = multipartBlob = null; // Free memory
+                                            mislukt = false;
+                                            uploadNextChunk(); // retry current chunk
+                                        }
 									} else {
+                                        nrpoging = 0;
 										// Handle chunk response
 										if (chunks) {
 											chunkArgs = {
@@ -724,6 +738,9 @@
 								}
 							};
 							
+                            if (nrpoging >= maxpoging)
+                                return;
+
 	
 							// Build multipart request
 							if (up.settings.multipart && features.multipart) {
@@ -749,7 +766,7 @@
 	
 									// Add file and send it
 									formData.append(up.settings.file_data_name, bin);								
-									xhr.send(formData);
+                                    var xhrsendresult = xhr.send(formData);
 	
 									return;
 								}  // if no FormData we can still try to send it directly as last resort (see below)

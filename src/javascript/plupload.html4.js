@@ -210,7 +210,7 @@
 						}
 
 						// Get result
-						result = el.documentElement.innerText || el.documentElement.textContent;
+                        if (el) result = el.documentElement.innerText || el.documentElement.textContent;
 						
 						// Assume no error
 						if (result) {

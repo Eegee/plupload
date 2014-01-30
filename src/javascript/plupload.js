@@ -962,10 +962,10 @@
 
 			// If we couldn't calculate a total file size then use the number of files to calc percent
 			if (total.size === undef) {
-				total.percent = files.length > 0 ? Math.ceil(total.uploaded / files.length * 100) : 0;
+				total.percent = files.length > 0 ? Math.ceil(total.uploaded / files.length * 1000) / 10 : 0;
 			} else {
 				total.bytesPerSec = Math.ceil(total.loaded / ((+new Date() - startTime || 1) / 1000.0));
-				total.percent = total.size > 0 ? Math.ceil(total.loaded / total.size * 100) : 0;
+				total.percent = total.size > 0 ? Math.ceil(total.loaded / total.size * 1000) / 10 : 0;
 			}
 		}
 
@@ -1137,7 +1137,7 @@
 				}
 
 				self.bind('UploadProgress', function(up, file) {
-					file.percent = file.size > 0 ? Math.ceil(file.loaded / file.size * 100) : 100;
+				    file.percent = file.size > 0 ? Math.ceil(file.loaded / file.size * 1000) / 10 : 100;
 					calc();
 				});
 

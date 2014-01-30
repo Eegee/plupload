@@ -74,7 +74,7 @@ package com.plupload {
 			removeEventListener(Event.ADDED_TO_STAGE, init);
 
 			// Allow cross domain scripting access
-			// Security.allowDomain("*");
+			Security.allowDomain("*");
 
 			// Setup id
 			this.id = (this.stage.loaderInfo.parameters["id"]).toString().replace(/[^\w]/g, ''); // allow only [a-zA-Z0-9_]
