@@ -307,7 +307,7 @@
 					});
 				});
 
-        uploader.bind("Flash:Error", function (up, err) {
+				uploader.bind("Flash:Error", function (up, err) {
 					up.lastError = err.code;
 					up.lastErrorTimestamp = new Date().getTime();
 
@@ -320,6 +320,14 @@
 								file: uploader.getFile(lookup[err.id])
 							});
 							break;
+						case 2038:
+							uploader.trigger('Error', {
+								code : plupload.IO_ERROR,
+								message : plupload.translate('IO error.'),
+								details : err.message,
+								file : uploader.getFile(lookup[err.id])
+							});
+							break;
 						default:
 							uploader.trigger('Error', {
 								code: parseInt(err.code, 10),
@@ -329,7 +337,7 @@
 							});
 							break;
 					}
-        });
+				});
 
 				uploader.bind("Flash:IOError", function(up, err) {
 					var now = new Date().getTime();
